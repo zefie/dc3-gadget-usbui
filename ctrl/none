@@ -1,0 +1,6 @@
+#!/bin/bash
+PWD=$(realpath "$(dirname "${0}")")
+source "${PWD}/_common"
+
+removeAll
+waitForSettle

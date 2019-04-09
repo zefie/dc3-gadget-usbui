@@ -1,0 +1,11 @@
+{
+  "name": "usbui",
+  "main": "main.html",
+  "scripts": {
+    "start": "nw ."
+  },
+  "dependencies": {
+    "@sindresorhus/df": "^3.1.0",
+    "jquery": "^3.3.1"
+  }
+}

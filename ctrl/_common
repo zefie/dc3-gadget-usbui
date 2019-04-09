@@ -1,0 +1,98 @@
+#!/bin/bash
+export USBIMG_REL_PATH="../images"
+export USE_CUSTOM_ID=1
+
+
+ID_VENDOR="0x1d6b"
+ID_PRODUCT="0x0104"
+ID_MANU="Zefie Networks"
+ID_PROD="Dreamcatcher 3 Utility Gadget"
+SETTLE_TIME=1
+
+
+SERIAL="$(grep Serial /proc/cpuinfo | sed 's/Serial\s*: 0000\(\w*\)/\1/')"
+if [ -z "${SERIAL}" ]; then
+        # Minimum serial length is 8 (for MAC conversion)
+        SERIAL=00000001
+fi
+MAC="$(echo "${SERIAL}" | rev | sed 's/\(\w\w\)/:\1/g' | cut -b 2- | rev)"
+MAC_DEV="02:00:$(echo "${MAC}" | rev | cut -b -11 | rev)"
+MAC_HOST_PRE=$(perl -le 'print hex("'"$(echo "${MAC_DEV}" | rev | cut -d':' -f1 | rev)"'")')
+MAC_HOST="$(echo "${MAC_DEV}" | rev | cut -d':' -f2- | rev):$(printf "%02X" "$((MAC_HOST_PRE + 1))")"
+
+
+function escapestr() {
+	echo "${1}" | sed 's/ /\ /g'
+}
+
+function waitForSettle() {
+	sleep "${SETTLE_TIME}"
+}
+
+function killProcesses() {
+	DHCHK=$(pgrep -af "${1}" | cut -d' ' -f1)
+	if [ "${DHCHK}" != "" ]; then
+		for g in $(echo ${DHCHK}); do
+			sudo kill "${g}"
+		done
+	fi
+}
+
+
+function removeAll() {
+	for f in $(lsmod | grep "^g_" | cut -d' ' -f1); do
+		if [ "${f}" == "g_ether" ] || [ "${f}" == "g_ncm" ]; then
+			local DHCHK;
+			local INTERFACE;
+			INTERFACE="$(ip link | grep usb | cut -d':' -f2 | rev | cut -d' ' -f1 | rev | tail -n1)"
+
+			killProcesses "dhclient.*${INTERFACE}"
+			killProcesses "dhcpd.*${INTERFACE}"
+
+			sudo ip link set "${INTERFACE}" down
+
+		fi
+		sudo rmmod "${f}"
+	done
+}
+
+function loadUSBMod() {
+	local MOD;
+	local OPTIONS;
+	MOD="g_${1}"
+	shift
+	OPTIONS=(${@})
+	if [ ! -z "${USE_CUSTOM_ID}" ]; then
+#		OPTIONS+=("idVendor=${ID_VENDOR}" "idProduct=${ID_PRODUCT}")
+		OPTIONS+=("iManufacturer=$(escapestr "${ID_MANU}")" "iProduct=$(escapestr "${ID_PROD}")")
+		OPTIONS+=("iSerialNumer=${SERIAL}")
+	fi
+	if [ "${MOD}" == "g_ether" ] || [ "${MOD}" == "g_ncm" ]; then
+		OPTIONS+=("dev_addr=${MAC_DEV}" "host_addr=${MAC_HOST}")
+	fi
+ 	sudo modprobe "${MOD}" "${OPTIONS[@]}"
+	if [ "${MOD}" == "g_ether" ] || [ "${MOD}" == "g_ncm" ]; then
+		local INTERFACE;
+		INTERFACE="$(dmesg | tail -n 20 | grep HOST | grep -i "${ETH_HOST_ADDR}" | cut -d':' -f1 | rev | cut -d' ' -f1 | tail -n1 | rev)"
+		while (true); do
+			if [ "${INTERFACE}" != "" ]; then
+				sudo ip link set "${INTERFACE}" up
+				if [ "${1}" == "static" ]; then
+					local IP;
+					IP="192.168.2.1/24"
+					if [ ! -z "${2}" ]; then
+						IP="${2}"
+					fi
+					sudo ip addr add "${IP}" dev "${INTERFACE}"
+					sleep 2
+					sudo /usr/sbin/dhcpd -4 -q -cf /etc/dhcp/dhcpd.conf "${INTERFACE}" > "/tmp/dhcpd-${INTERFACE}.log" 2>&1 &
+				else
+					sudo dhclient -v "${INTERFACE}"
+				fi
+				break;
+			else
+				sleep 1
+			fi
+		done
+	fi
+}

@@ -1,0 +1,4 @@
+*.img
+*.iso
+ui/node_modules/
+ui/nwjs-v0.28.4-linux-arm/

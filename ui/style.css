@@ -1,0 +1,37 @@
+body {
+    background-color: black;
+    color: gainsboro;
+    overflow: hidden;
+}
+#main {
+    margin: auto;
+    width: 80%;
+    padding-top: 25px;
+    text-align: center;
+}
+button, select {
+    zoom: 2;
+    font-size: x-small;
+    background-color: purple;
+    border-color: plum;
+    color: gainsboro;
+    margin-bottom: 6px;
+}
+.logo {
+    position: absolute;
+    z-index: -1;
+    top: 3px;
+    left: 3px;
+    width: 32px;
+    height: 32px;
+}
+#mode {
+    float: right;
+    font-size: xx-small;
+}
+#reload {
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    scale: 1;
+}

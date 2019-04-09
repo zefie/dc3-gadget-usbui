@@ -1,0 +1,5 @@
+Requirements:
+
+- nodejs
+- nw ( see https://github.com/LeonardLaszlo/nw.js-armv7-binaries for arm )
+- a device that can be an USB gadget
