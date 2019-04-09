@@ -65,7 +65,7 @@ function loadUSBMod() {
 	if [ ! -z "${USE_CUSTOM_ID}" ]; then
 #		OPTIONS+=("idVendor=${ID_VENDOR}" "idProduct=${ID_PRODUCT}")
 		OPTIONS+=("iManufacturer=$(escapestr "${ID_MANU}")" "iProduct=$(escapestr "${ID_PROD}")")
-		OPTIONS+=("iSerialNumer=${SERIAL}")
+		OPTIONS+=("iSerialNumber=${SERIAL}")
 	fi
 	if [ "${MOD}" == "g_ether" ] || [ "${MOD}" == "g_ncm" ]; then
 		OPTIONS+=("dev_addr=${MAC_DEV}" "host_addr=${MAC_HOST}")
