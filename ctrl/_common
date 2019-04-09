@@ -42,7 +42,6 @@ function killProcesses() {
 function removeAll() {
 	for f in $(lsmod | grep "^g_" | cut -d' ' -f1); do
 		if [ "${f}" == "g_ether" ] || [ "${f}" == "g_ncm" ]; then
-			local DHCHK;
 			local INTERFACE;
 			INTERFACE="$(ip link | grep usb | cut -d':' -f2 | rev | cut -d' ' -f1 | rev | tail -n1)"
 
