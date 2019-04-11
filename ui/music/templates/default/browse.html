@@ -1,0 +1,24 @@
+
+			<!--<ul id="crumb_trail">
+				<li><a href="{:$home_link:}"><img src="templates/{:$template:}/images/home.gif" alt="Home" /></a></li>
+
+				{:foreach from=$dir_list item=dir_list_item:}
+					<li>&bull; <a href="index.php?browse={:$dir_list_item.path:}">{:$dir_list_item.name|escape:'html':}</a></li>
+				{:/foreach:}
+
+			</ul>-->
+			
+			<div id="list_header">
+				<div id="buttons"><a href="index.php?action=playall"><img src="templates/{:$template:}/images/playall.png" /></a> <a href="index.php?action=addall"><img src="templates/{:$template:}/images/addall.png" /></a></div>
+				{:if $browse_parent_link:}<a href="index.php?browse={:$browse_parent_link:}" id="browse_back">&nbsp;</a>{:/if:}
+				<p>{:$browse_header|escape:'html':}</p>
+			</div>
+
+
+			<div id="list">
+				<ul class="list">
+					{:foreach from=$browselist item=browselist_item:}
+						{:include file="default/browselist_item.html":}
+					{:/foreach:}
+				</ul>
+			</div>

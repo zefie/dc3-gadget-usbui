@@ -2,10 +2,29 @@
   "name": "usbui",
   "main": "main.html",
   "scripts": {
-    "start": "nw ."
+    "start": "nw --enable-logging=stderr --disable-web-security ."
   },
   "dependencies": {
     "@sindresorhus/df": "^3.1.0",
-    "jquery": "^3.3.1"
+    "express": "^4.16.4",
+    "http": "0.0.0",
+    "jquery-ui": "^1.12.1",
+    "node-php": "0.0.1"
+  },
+  "window": {
+    "title": "ZefieNet Gadget USBUI",
+    "icon": "alti_avatar.png",
+    "toolbar": false,
+    "frame": false,
+    "width": 240,
+    "height": 320,
+    "position": "mouse",
+    "min_width": 320,
+    "min_height": 240,
+    "max_width": 320,
+    "max_height": 240
+  },
+  "webkit": {
+    "plugin": true
   }
 }

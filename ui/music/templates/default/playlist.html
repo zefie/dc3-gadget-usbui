@@ -1,0 +1,21 @@
+			<div id="list_header">
+				<div id="buttons">
+					<a id="removeall" href="{:$playlist_clear_link:}"><img src="templates/{:$template:}/images/delall.png" /></a>
+				</div>
+				<div id="buttons_left">
+					<a id="shuffle" href="{:$playlist_shuffle_link:}"><img src="templates/{:$template:}/images/shuffle.png" /></a>
+				</div>
+			</div>
+
+			{:if $playlist:}
+			<div id="list">
+
+				<ul class="list">
+					{:foreach from=$playlist item=playlist_item:}
+						{:include file="default/playlist_item.html":}
+					{:/foreach:}
+				</ul>
+			</div>			{:else:}
+			<p>(Empty playlist)</p>
+			{:/if:}
+
