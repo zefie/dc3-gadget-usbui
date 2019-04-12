@@ -14,6 +14,7 @@ var usbroot = path.normalize(process.cwd()+'/../');
 var usbctrl = path.normalize(usbroot+'/ctrl/');
 var usbimg = path.normalize(usbroot+'/images/');
 var usbui = path.normalize(usbroot+'/ui/');
+var external_sd = '/dev/mmcblk1';
 var cmtmp = '/tmp/currentmode.zef'; // use tmp because its in ram
 var staticip = '192.168.57.3/27';
 var currentmenu = null;
@@ -69,50 +70,76 @@ function nwalert(content, title = 'Notice', btn1text = 'Okay', clickfunc = null,
         bgiframe: false,
         buttons: [
             { text: btn1text, "class": btn1css, click: function () {
-                if (typeof(clickfunc) === 'function') clickfunc();
                 $("#dialog").dialog('close');
+                if (clickfunc instanceof Function) clickfunc();
                 }
             }, { 
               text: btn2text, "class": btn2css, click: function () {
-                if (typeof(clickfunc2) === 'function') clickfunc2();
                 $("#dialog").dialog('close');
+                if (clickfunc2 instanceof Function) clickfunc2();
               }
             }
         ]
     });
 }
 
-function servicetoggle(service, truetoggle = false) {
-    mdiv = document.getElementById('mode');
-    if (!truetoggle) {
-        exec(usbctrl+'/service-status '+service, function (error, stdout) {
-            if (error) {
-                nwalert(error,'Error','Okay', function() {
-                    updateCurrentMode(currentmode);
-                });
-                return;
-            }
-            if (parseInt(stdout) > 0) msg = "STOP";
-            else msg = "START";
-            nwalert('Are you sure you want to <strong>'+msg+'</strong> the following service?<br><br><span font-size="normal">'+service+'</span>','Confirm','Yes', function() {
-                $(mdiv).html('<strong>Please wait... processing '+service+'</strong>');
-                $(':button').prop('disabled', true);
-                exec(usbctrl+'/service-toggle '+service, function (error, stdout) {
-                    $(':button').prop('disabled', false);
-                    if (error) {
-                        nwalert(error,'Error','Okay', function() {
-                            updateCurrentMode(currentmode);
-                        });
-                        return;
-                    }
-                    nwalert(stdout,'Status','Okay', function() {
+function sd2flash(imgfile) {
+    if (imgfile == '/dev/mmcblk1.img') {
+        nwalert("You can't flash the SD card to itself ;)",'Error');
+        return false;
+    }
+    nwalert('Are you sure you want to overwrite the contents of the SD Card in Slot 2 with '+imgfile+'?','Confirm Overwrite','Yes', function() {
+        nwalert('Are you <strong>absolutely</strong> sure you want to destroy the contents of the SD Card in Slot 2?','Confirm Overwrite','No', null, 'Yes', function() {
+            nwalert('Not implemented');        
+            /*
+            $(mdiv).html('<strong>Please wait... processing...</strong>');
+            $(':button').prop('disabled', true);
+            exec(usbctrl+'/service-toggle '+service, function (error, stdout) {
+                $(':button').prop('disabled', false);
+                if (error) {
+                    nwalert(error,'Error','Okay', function() {
                         updateCurrentMode(currentmode);
                     });
+                    return;
+                }
+                nwalert(stdout,'Status','Okay', function() {
+                    updateCurrentMode(currentmode);
                 });
-            }, 'No');
-            
+            });
+            */
         });
-    }
+    }, 'No');
+    
+}
+
+function servicetoggle(service) {
+    mdiv = document.getElementById('mode');
+    exec(usbctrl+'/service-status '+service, function (error, stdout) {
+        if (error) {
+            nwalert(error,'Error','Okay', function() {
+                updateCurrentMode(currentmode);
+            });
+            return;
+        }
+        if (parseInt(stdout) > 0) msg = "STOP";
+        else msg = "START";
+        nwalert('Are you sure you want to <strong>'+msg+'</strong> the following service?<br><br><span font-size="normal">'+service+'</span>','Confirm','Yes', function() {
+            $(mdiv).html('<strong>Please wait... processing '+service+'</strong>');
+            $(':button').prop('disabled', true);
+            exec(usbctrl+'/service-toggle '+service, function (error, stdout) {
+                $(':button').prop('disabled', false);
+                if (error) {
+                    nwalert(error,'Error','Okay', function() {
+                        updateCurrentMode(currentmode);
+                    });
+                    return;
+                }
+                nwalert(stdout,'Status','Okay', function() {
+                    updateCurrentMode(currentmode);
+                });
+            });
+        }, 'No');
+    });
 }
 
 
@@ -127,6 +154,13 @@ function usbcmd(cmd, args = []) {
 
     switch (cmd) {
         case 'mass_storage':
+            if (args[0] === external_sd+'.img') {
+                if (fs.existsSync(external_sd)) args[0] = external_sd;
+                else {
+                    nwalert('Data SD is not detected.','Error');
+                    return false;
+                }
+            }        
             currentmode = 'Mass Storage '+args[0];
             if (args.length > 1) {
                 if (args[1] === 'ro=1') currentmode += ' (R/O)';
@@ -154,7 +188,6 @@ function usbcmd(cmd, args = []) {
         default:
             currentmode = 'Unknown';
     }
-    console.log(args);
     spawn(usbctrl+'/'+cmd, args);
     updateCurrentMode(currentmode);
 }
@@ -200,10 +233,13 @@ function menu(m) {
                                     results.push(item.substring(0,item.length-(ext.length+1)));
                                 }
                             }
+                            if (m === 'mass_storage_rw') results.push('/dev/mmcblk1');
                             if (results.length > 0) {
+                                var sd2 = false;
                                 var s = $('<select/>', {id : 'fileselect'});
                                 for (var i in results) {
                                     if (currentmode.indexOf(results[i]) >= 0) {
+                                        if (currentmode.indexOf('mmcblk1') > 0) sd2 = true; 
                                         s.append($('<option/>',{selected: 'selected'}).html(results[i]));
                                     } else {
                                         s.append($('<option/>').html(results[i]));
@@ -213,12 +249,10 @@ function menu(m) {
                                 if (m === 'mass_storage_rw') {
                                     mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"usbcmd('mass_storage',[document.getElementById('fileselect').value+'."+ext+"'])\" style=\"display: inline\">R/W</button>";
                                     mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"usbcmd('mass_storage',[document.getElementById('fileselect').value+'."+ext+"','ro=1'])\">R/O</button>";
-                                    mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"usbcmd('mass_storage',['none'])\">Unmount</button>";
                                 }
-                                if (m === 'mass_storage_iso') {
-                                    mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"usbcmd('mass_storage',[document.getElementById('fileselect').value+'."+ext+"','ro=1','cdrom=1'])\">Mount ISO</button>";
-                                    mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"usbcmd('mass_storage',['none'])\">Unmount</button>";
-                                }
+                                if (m === 'mass_storage_iso') mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"usbcmd('mass_storage',[document.getElementById('fileselect').value+'."+ext+"','ro=1','cdrom=1'])\">Mount ISO</button>";
+                                if (!sd2) mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"sd2flash([document.getElementById('fileselect').value+'."+ext+"'])\" style=\"display: inline\">Flash SD2</button>";
+                                mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"usbcmd('mass_storage',['none'])\">Unmount</button>";
                             }
                         
                         }
@@ -264,7 +298,7 @@ function menu(m) {
 
             default:
                 mdiv.innerHTML += genButton('USB Ethernet','menu','ethernet');
-                mdiv.innerHTML += genButton('USB Mass Storage','menu','mass_storage');
+                mdiv.innerHTML += genButton('Disk Images','menu','mass_storage');
                 mdiv.innerHTML += genButton('Services','menu','services');
                 if (currentmode.length > 0 && currentmode != 'Disabled') {
                     mdiv.innerHTML += genButton('Disable USB','usbcmd','none');

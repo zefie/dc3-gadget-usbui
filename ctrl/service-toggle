@@ -1,0 +1,13 @@
+#!/bin/bash
+SERVICE_RUNNING=$(systemctl status "${1}" | grep " active " -c)
+
+if [ ${SERVICE_RUNNING} -eq 0 ]; then
+	CMD="start"
+else
+	CMD="stop"
+fi
+
+echo -n "${CMD} ${1} ..."
+sudo systemctl "${CMD}" "${1}"
+echo " done."
+

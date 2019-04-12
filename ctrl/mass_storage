@@ -3,11 +3,11 @@ PWD=$(realpath "$(dirname "${0}")")
 source "${PWD}/_common"
 USBFILE="${1}"
 shift
-if [ ! -f "${USBFILE}" ]; then
+if [ ! -e "${USBFILE}" ]; then
 	USBPATH="$(realpath "${PWD}/${USBIMG_REL_PATH}")"
 	USBFILE="$(realpath "${USBPATH}/${USBFILE}")"
 fi
-if [ -f "${USBFILE}" ]; then
+if [ -e "${USBFILE}" ]; then
 	removeAll
 	waitForSettle
 	loadUSBMod mass_storage "file=${USBFILE}" "removable=1" "${@}"
