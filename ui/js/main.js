@@ -6,8 +6,8 @@ var fs = require('fs');
 var path = require("path");
 const { execSync, exec } = require('child_process');
 var express = require('express');
-var php = require("node-php"); 
-var path = require("path"); 
+var php = require("node-php");
+var path = require("path");
 
 var express_port = 9090;
 var usbroot = path.normalize(process.cwd()+'/../');
@@ -48,16 +48,16 @@ function loadsite(webapp, index = '') {
     $(mdiv).hide();
     mdiv = document.getElementById('webframe');
     app = express();
-    app.use("/", php.cgi(usbui+'/apps/'+webapp)); 
+    app.use("/", php.cgi(usbui+'/apps/'+webapp));
     current_http = app.listen(express_port);
-    
+
     $(mdiv).attr('src',"http://localhost:"+express_port+'/'+index);
     $(mdiv).show();
 }
 
 function execmd(ecmd) {
     enableButtons(false);
-    execSync(usbui+'xterm-exec.sh '+ecmd);
+    execSync(usbui+'scripts/xterm-exec.sh '+ecmd);
     enableButtons(true);
 }
 
@@ -106,7 +106,7 @@ function nwalert(content, title = 'Notice', btn1text = 'Okay', clickfunc = null,
                 if (clickfunc instanceof Boolean) enableButtons(clickfunc);
                 if (clickfunc instanceof Function) clickfunc();
               }
-            }, { 
+            }, {
               text: btn2text, "class": btn2css, click: function () {
                 $("#dialog").dialog('close');
                 if (clickfunc2 instanceof Boolean) enableButtons(clickfunc2);
@@ -125,7 +125,7 @@ function sd2flash(imgfile) {
     }
     nwalert('Are you sure you want to overwrite the contents of the SD Card in Slot 2 with '+imgfile+'?','Confirm Overwrite','Yes', function() {
         nwalert('Are you <strong>absolutely</strong> sure you want to destroy the contents of the SD Card in Slot 2?','Confirm Overwrite','No', bool.true, 'Yes', function() {
-            $(mdiv).html('<strong>Please wait... processing...</strong>');            
+            $(mdiv).html('<strong>Please wait... processing...</strong>');
             exec(usbctrl+'/flash-sd2 '+imgfile, function (error, stdout) {
                 enableButtons(true);
                 if (error) {
@@ -140,14 +140,13 @@ function sd2flash(imgfile) {
             });
         });
     }, 'No', bool.true);
-    
 }
 
 function sd2format(filesys) {
     enableButtons(false);
     nwalert('Are you sure you want to overwrite the contents of the SD Card in Slot 2 and format it with '+filesys+'?','Confirm Overwrite','Yes', function() {
         nwalert('Are you <strong>absolutely</strong> sure you want to destroy the contents of the SD Card in Slot 2?','Confirm Overwrite','No', bool.true, 'Yes', function() {
-            $(mdiv).html('<strong>Please wait... processing...</strong>');            
+            $(mdiv).html('<strong>Please wait... processing...</strong>');
             exec(usbctrl+'/format-sd2 '+filesys, function (error, stdout) {
                 enableButtons(true);
                 if (error) {
@@ -162,7 +161,6 @@ function sd2format(filesys) {
             });
         });
     }, 'No', bool.true);
-    
 }
 
 function servicetoggle(service) {
@@ -203,10 +201,10 @@ function usbcmd(cmd, args = []) {
     if (cmd.substring(0,4) != 'usb-') cmd = 'usb-'+cmd;
 
     if (cmd === 'usb-mass-storage') {
-        if (args[0].toLowerCase().substring(0,4) == 'none') {            
+        if (args[0].toLowerCase().substring(0,4) == 'none') {
             cmd = 'usb-none';
             args = [];
-        }        
+        }
     }
 
     switch (cmd) {
@@ -218,13 +216,13 @@ function usbcmd(cmd, args = []) {
                     enableButtons(true);
                     return false;
                 }
-            }        
+            }
             currentmode = 'Mass Storage '+args[0];
             if (args.length > 1) {
                 if (args[1] === 'ro=1') currentmode += ' (R/O)';
             }
             break;
-       
+
         case 'usb-ethernet':
             currentmode = 'Ethernet '+args[0];
             if (args[1] === 'static') currentmode += ' '+args[2];
@@ -247,14 +245,14 @@ function usbcmd(cmd, args = []) {
             currentmode = 'Unknown';
     }
     $('#mode').html('<strong>Processing... Please wait</strong>');
-    exec(usbctrl+'/'+cmd, args, function(error, stdout) {        
+    exec(usbctrl+'/'+cmd, args, function(error, stdout) {
         enableButtons(true);
         if (!error) updateCurrentMode(currentmode);
         else {
             updateCurrentMode(oldmode);
             nwalert("There was an error processing the command:\n"+error,'Error');
         }
-    });        
+    });
 }
 
 function updateCurrentMode(m) {
@@ -282,7 +280,7 @@ function menu(m) {
     if (timer !== null) clearInterval(timer);
     currentmenu = m;
     mdiv = document.getElementById('main');
-    if (mdiv !== null) {        
+    if (mdiv !== null) {
         $(mdiv).empty();
         $(mdiv).removeData();
         var sd2check = false;
@@ -318,7 +316,7 @@ function menu(m) {
                                         s.append($('<option/>').html(results[i]));
                                     }
                                 }
-                                $(mdiv).append(s);                                
+                                $(mdiv).append(s);
                                 if (m === 'mass_storage_rw') {
                                     mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"usbcmd('mass-storage',[document.getElementById('fileselect').value+'."+ext+"'])\" style=\"display: inline\">"+fa('lock-open')+"</button> ";
                                     mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"usbcmd('mass-storage',[document.getElementById('fileselect').value+'."+ext+"','ro=1'])\">"+fa('lock')+"</button> ";
@@ -327,7 +325,6 @@ function menu(m) {
                                 mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"usbcmd('mass-storage',['none'])\">"+fa('eject')+"</button><br>";
                                 if (!sd2 && sd2avail) mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"sd2flash([document.getElementById('fileselect').value+'."+ext+"'])\" style=\"display: inline\">"+fa('pen')+" "+fa('arrow-right')+" "+fa('sd-card')+"2</button><br>";
                             }
-                        
                         }
                     }
                 });
@@ -339,12 +336,11 @@ function menu(m) {
                 sd2check = true;
                 mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"servicetoggle('smbd')\">SMB</button> ";
                 mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"servicetoggle('ssh')\">SSH</button> ";
-                mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"execmd('nmtui')\">Wifi</button><br> ";                
+                mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"execmd('nmtui')\">Wifi</button><br> ";
                 mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"servicetoggle('webmin')\">Webmin</button> ";
                 mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"loadsite('music','index.php')\">Music</button><br>";
                 if (sd2avail) mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"menu('sd2_format')\">Format "+fa('sd-card')+"2</button><br>";
                 break;
-                
 
             case 'mass_storage':
                 setLastMenu(null);
@@ -352,13 +348,13 @@ function menu(m) {
                 mdiv.innerHTML += genButton('ISO Images','menu','mass_storage_iso');
                 break;
 
-            case 'sd2_format':            
+            case 'sd2_format':
                 setLastMenu('services');
                 $('#main').data('sd2-remove-exit',true);
                 sd2check = true;
                 var selopts = new Array();
                 selopts.push('FAT32');
-                selopts.push('ExFAT');
+                selopts.push('exFAT');
                 selopts.push('NTFS');
                 selopts.push('HFS');
                 selopts.push('HFS+');
@@ -372,10 +368,10 @@ function menu(m) {
                     } else {
                         s.append($('<option/>').html(selopts[i]));
                     }
-                }                
+                }
                 $(mdiv).append(s);
                 mdiv.innerHTML += "<br><button class=\"zefmenu\" onclick=\"sd2format(document.getElementById('fsselect').value)\">Format "+fa('sd-card')+"2</button>";
-                break;                
+                break;
 
             case 'ethernet':
                 setLastMenu(null);
@@ -404,7 +400,7 @@ function menu(m) {
                 mdiv.innerHTML += genButton('Services','menu','services');
                 if (currentmode.length > 0 && currentmode != 'Disabled') {
                     mdiv.innerHTML += genButton('Disable USB','usbcmd','none');
-                }                
+                }
                 break;
         }
 
@@ -414,7 +410,7 @@ function menu(m) {
                     if (!sd2avail) {
                         if ($('#main').data('sd2-insert-reload') == true) menu(currentmenu);
                         sd2avail = true;
-                    }                        
+                    }
                 }
                 else {
                     if (sd2avail) {
@@ -423,13 +419,13 @@ function menu(m) {
                             menu($('#main').data('previous-menu'));
                         } else {
                             if ($('#main').data('sd2-insert-reload') == true) menu(currentmenu);
-                        }                        
+                        }
                         if (currentmode.indexOf('mmcblk1') > 0) {
                             usbcmd('none');
                             nwalert("SD2 was removed while attached to mass storage!",'Error','Oops');
                         }
                         sd2avail = false;
-                    }                    
+                    }
                 }
             },1000);
         }
@@ -446,7 +442,7 @@ onload = function() {
         currentmenu = $.cookie('currentmenu');
         $.removeCookie('currentmenu');
     }
-    $(logo).on('click', function() { 
+    $(logo).on('click', function() {
         menu($('#main').data('previous-menu'));
     });
     fs.readFile(cmtmp,function(err,data) {
