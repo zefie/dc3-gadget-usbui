@@ -1,0 +1,26 @@
+#!/bin/bash
+PWD=$(realpath "$(dirname "${0}")")
+source "${PWD}/_common"
+SD2="/dev/mmcblk1"
+USBFILE="${1}"
+shift
+
+if [ ! -e "${USBFILE}" ]; then
+	USBPATH="$(realpath "${USBUI_ROOT}/${USBIMG_REL_PATH}")"
+	USBFILE="$(realpath "${USBPATH}/${USBFILE}")"
+fi
+
+
+if [ -e "${USBFILE}" ]; then
+	if [ -e "${SD2}" ]; then
+		if [ ! -z "${1}" ] || [ -z "${DISPLAY}" ]; then
+			(pv -n "${USBFILE}" | sudo dd of="${SD2}" conv=notrunc,noerror) 2>&1 | dialog --gauge "Cloning $(basename ${USBFILE}) to ${SD2}, please wait..." 10 70 0
+			echo "Syncing data to card..."
+			sync
+		else
+			xterm_exec "${0}" "${USBFILE}" 1;
+		fi
+	else
+		exit 1;
+	fi
+fi

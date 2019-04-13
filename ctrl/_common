@@ -1,7 +1,7 @@
 #!/bin/bash
-export USBIMG_REL_PATH="../images"
+export USBUI_ROOT="$(realpath "$(dirname "${0}")/..")"
+export USBIMG_REL_PATH="/images"
 export USE_CUSTOM_ID=1
-
 
 ID_VENDOR="0x1d6b"
 ID_PRODUCT="0x0104"
@@ -94,4 +94,8 @@ function loadUSBMod() {
 			fi
 		done
 	fi
+}
+
+function xterm_exec() {
+	"${USBUI_ROOT}/ui/scripts/xterm-exec.sh" "${@}"
 }

@@ -1,19 +1,21 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <link rel="stylesheet" href="jquery-ui-1.12.1.custom/jquery-ui.structure.css" />
-        <link rel="stylesheet" href="jquery-ui-1.12.1.custom/jquery-ui.theme.css" />
-        <link rel="stylesheet" href="style.css" />
-        <script src="jquery-3.3.1.min.js"></script>
-        <script src="jquery-ui-1.12.1.custom/jquery-ui.js"></script>
-        <script src="main.js"></script>
+        <link rel="stylesheet" href="js/jquery-ui-1.12.1.custom/jquery-ui.structure.css" />
+        <link rel="stylesheet" href="js/jquery-ui-1.12.1.custom/jquery-ui.theme.css" />
+        <link rel="stylesheet" href="css/style.css" />
+        <link rel="stylesheet" href="extra/fontawesome-free-5.8.1-web/css/all.css" />
+        <script defer src="extra/fontawesome-free-5.8.1-web/js/all.js"></script>
+        <script src="js/jquery-3.3.1.min.js"></script>
+        <script src="js/jquery.cookie-1.4.1.min.js"></script>
+        <script src="js/jquery-ui-1.12.1.custom/jquery-ui.js"></script>
+        <script src="js/main.js"></script>
     </head>
 <body>
     <div id="wrapper">
-        <img src="alti_avatar.png" class="logo">
         <div id="mode"> &nbsp; </div>    
         <div id="main"></div>
-        <button class="zefmenu" style="zoom: 1 !important" onclick="location.reload()" id="reload">&#x21bb;</button>
+        <button class="zefmenu" style="zoom: 1 !important" onclick="reloadApp()" id="reload">&#x21bb;</button>
         <div id="dialog" title="Notice" style="display: none">
             <div class="ui-dialog-content ui-widget-content">
                 <label id="lblMessage">
@@ -22,5 +24,8 @@
         </div>
     </div>
     <iframe id="webframe"></iframe>
+    <div id="logo">
+        <img src="images/alti_avatar.png">
+    </div>
 </body>
 </html>

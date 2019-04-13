@@ -1,0 +1,3 @@
+#!/bin/bash
+export USBUI_ROOT="$(realpath "$(dirname "${0}")/../..")"
+export GPIO_BACKLIGHT="/sys/class/backlight/backlight"
