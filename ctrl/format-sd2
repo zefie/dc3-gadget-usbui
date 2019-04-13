@@ -1,0 +1,68 @@
+#!/bin/bash
+PWD=$(realpath "$(dirname "${0}")")
+source "${PWD}/_common"
+SD2="/dev/mmcblk1"
+FILE_SYSTEM=$(echo "${1}" | tr '[:upper:]' '[:lower:]')
+
+function chkerr() {
+	if [ ${1} -ne 0 ]; then
+		exit ${1}
+	fi
+}
+
+function do_partition() {
+	echo "start=2048, type=${1}" | sudo sfdisk -w always -W always -X dos -Y dos "${SD2}"
+	chkerr $?
+	sudo sync && sudo kpartx "${SD2}"
+	chkerr $?
+	sleep 1
+}
+
+
+if [ ! -z "${FILE_SYSTEM}" ]; then
+	case "${FILE_SYSTEM}" in
+		"fat32")
+			do_partition c
+			sudo mkfs.vfat -F32 "${SD2}p1"
+			chkerr $?
+			;;
+		"exfat")
+			do_partition 7
+			sudo mkfs.exfat "${SD2}p1"
+			chkerr $?
+			;;
+		"ntfs")
+			do_partition 7
+			sudo mkfs.ntfs -Q "${SD2}p1"
+			chkerr $?
+			;;
+		"hfs")
+			do_partition af
+			sudo mkfs.hfs -h "${SD2}p1"
+			chkerr $?
+			;;
+		"hfs+")
+			do_partition af
+			sudo mkfs.hfs "${SD2}p1"
+			chkerr $?
+			;;
+		"ext4")
+			do_partition 83
+			sudo mkfs.ext4 "${SD2}p1"
+			chkerr $?
+			;;
+		"f2fs")
+			do_partition 83
+			sudo mkfs.f2fs "${SD2}p1"
+			chkerr $?
+			;;
+		*)
+			exit 1
+			;;
+
+	esac
+	sync
+	exit 0
+else
+	exit 1
+fi
