@@ -1,6 +1,7 @@
 /etc/X11/xinit/xinitrc &
 xscreensaver -nosplash & 
 if [ $(lsmod | grep -c 'fbtft') -gt 0 ]; then
+	/home/zefie/usb/ui/xbacklight-fbtft.sh 0
 	/home/zefie/usb/ui/xbacklight-fbtft.sh &
 fi
 /home/zefie/usb/ui/uiloop.sh

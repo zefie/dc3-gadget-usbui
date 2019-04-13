@@ -20,4 +20,8 @@ process() {
 	done
 }
 
-xscreensaver-command -watch | process
+if [ -z "${1}" ]; then
+	xscreensaver-command -watch | process
+else
+	echo "${1}" | sudo tee ${BL}/bl_power 1>/dev/null
+fi
