@@ -4,16 +4,16 @@ nwin.enterFullscreen();
 //nwin.showDevTools();
 var fs = require('fs');
 var path = require("path");
-const { execSync, exec } = require('child_process');
+const { execSync, exec, spawn } = require('child_process');
 var express = require('express');
 var php = require("node-php");
 var path = require("path");
 
 var express_port = 9090;
-var usbroot = path.normalize(process.cwd()+'/../');
-var usbctrl = path.normalize(usbroot+'/ctrl/');
-var usbimg = path.normalize(usbroot+'/images/');
-var usbui = path.normalize(usbroot+'/ui/');
+var usbroot = path.normalize(process.cwd()+'/..');
+var usbctrl = path.normalize(usbroot+'/ctrl');
+var usbimg = path.normalize(usbroot+'/images');
+var usbui = path.normalize(usbroot+'/ui');
 var external_sd = '/dev/mmcblk1';
 var cmtmp = '/tmp/currentmode.zef'; // use tmp because its in ram
 var staticip = '192.168.57.3/27';
@@ -57,7 +57,7 @@ function loadsite(webapp, index = '') {
 
 function execmd(ecmd) {
     enableButtons(false);
-    execSync(usbui+'scripts/xterm-exec.sh '+ecmd);
+    execSync(usbui+'/scripts/xterm-exec.sh '+ecmd);
     enableButtons(true);
 }
 
@@ -126,7 +126,7 @@ function sd2flash(imgfile) {
     nwalert('Are you sure you want to overwrite the contents of the SD Card in Slot 2 with '+imgfile+'?','Confirm Overwrite','Yes', function() {
         nwalert('Are you <strong>absolutely</strong> sure you want to destroy the contents of the SD Card in Slot 2?','Confirm Overwrite','No', bool.true, 'Yes', function() {
             $(mdiv).html('<strong>Please wait... processing...</strong>');
-            exec(usbctrl+'/flash-sd2 '+imgfile, function (error, stdout) {
+            exec(usbctrl+'/flash-sd2 '+imgfile, null, function (error, stdout) {
                 enableButtons(true);
                 if (error) {
                     nwalert(error,'Error','Okay', function() {
@@ -147,7 +147,7 @@ function sd2format(filesys) {
     nwalert('Are you sure you want to overwrite the contents of the SD Card in Slot 2 and format it with '+filesys+'?','Confirm Overwrite','Yes', function() {
         nwalert('Are you <strong>absolutely</strong> sure you want to destroy the contents of the SD Card in Slot 2?','Confirm Overwrite','No', bool.true, 'Yes', function() {
             $(mdiv).html('<strong>Please wait... processing...</strong>');
-            exec(usbctrl+'/format-sd2 '+filesys, function (error, stdout) {
+            exec(usbctrl+'/format-sd2 '+filesys, null, function (error, stdout) {
                 enableButtons(true);
                 if (error) {
                     nwalert(error,'Format Failed','Okay', function() {
@@ -166,7 +166,7 @@ function sd2format(filesys) {
 function servicetoggle(service) {
     enableButtons(false);
     mdiv = document.getElementById('mode');
-    exec(usbctrl+'/service-status '+service, function (error, stdout) {
+    exec(usbctrl+'/service-status '+service, null, function (error, stdout) {
         if (error) {
             nwalert(error,'Error','Okay', function() {
                 updateCurrentMode(currentmode);
@@ -177,7 +177,7 @@ function servicetoggle(service) {
         else msg = "START";
         nwalert('Are you sure you want to <strong>'+msg+'</strong> the following service?<br><br><span font-size="normal">'+service+'</span>','Confirm','Yes', function() {
             $(mdiv).html('<strong>Please wait... processing '+service+'</strong>');
-            exec(usbctrl+'/service-toggle '+service, function (error, stdout) {
+            exec(usbctrl+'/service-toggle '+service, null, function (error, stdout) {
                 enableButtons(true);
                 if (error) {
                     nwalert(error,'Error','Okay', function() {
@@ -198,17 +198,16 @@ function servicetoggle(service) {
 function usbcmd(cmd, args = []) {
     var oldmode = currentmode;
     enableButtons(false);
-    if (cmd.substring(0,4) != 'usb-') cmd = 'usb-'+cmd;
 
-    if (cmd === 'usb-mass-storage') {
-        if (args[0].toLowerCase().substring(0,4) == 'none') {
-            cmd = 'usb-none';
+    if (cmd === 'mass-storage') {
+        if (args[0].toLowerCase() === 'none') {
+            cmd = 'none';
             args = [];
         }
     }
 
     switch (cmd) {
-        case 'usb-mass-storage':
+        case 'mass-storage':
             if (args[0] === external_sd+'.img') {
                 if (fs.existsSync(external_sd)) args[0] = external_sd;
                 else {
@@ -223,7 +222,7 @@ function usbcmd(cmd, args = []) {
             }
             break;
 
-        case 'usb-ethernet':
+        case 'ethernet':
             currentmode = 'Ethernet '+args[0];
             if (args[1] === 'static') currentmode += ' '+args[2];
             args.forEach(function(a,i) {
@@ -231,13 +230,13 @@ function usbcmd(cmd, args = []) {
                 if (a === 'use_eem=0') currentmode += ' CDC ECM';
                 if (a === 'use_ncm=1') {
                     currentmode += ' NCM (*nix)';
-                    cmd = "usb-ethernet-ncm";
+                    cmd = "ethernet-ncm";
                     args.splice(i,1);
                 }
             });
             break;
 
-        case 'usb-none':
+        case 'none':
             currentmode = 'Disabled';
             break;
 
@@ -245,7 +244,7 @@ function usbcmd(cmd, args = []) {
             currentmode = 'Unknown';
     }
     $('#mode').html('<strong>Processing... Please wait</strong>');
-    exec(usbctrl+'/'+cmd, args, function(error, stdout) {
+    exec(usbctrl+'/usb-'+cmd+' '+args.join(' '), null, function(error, stdout) {
         enableButtons(true);
         if (!error) updateCurrentMode(currentmode);
         else {
@@ -310,7 +309,7 @@ function menu(m) {
                                 var s = $('<select/>', {id : 'fileselect', class: 'zefmenu'});
                                 for (var i in results) {
                                     if (currentmode.indexOf(results[i]) >= 0) {
-                                        if (currentmode.indexOf('mmcblk1') > 0) sd2 = true; 
+                                        if (currentmode.indexOf('mmcblk1') > 0) sd2 = true;
                                         s.append($('<option/>',{selected: 'selected'}).html(results[i]));
                                     } else {
                                         s.append($('<option/>').html(results[i]));

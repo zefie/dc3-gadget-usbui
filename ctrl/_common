@@ -3,23 +3,29 @@ export USBUI_ROOT="$(realpath "$(dirname "${0}")/..")"
 export USBIMG_REL_PATH="/images"
 export USE_CUSTOM_ID=1
 
-ID_VENDOR="0x1d6b"
-ID_PRODUCT="0x0104"
+#ID_VENDOR="0x1d6b"
+#ID_PRODUCT="0x0104"
 ID_MANU="Zefie Networks"
 ID_PROD="Dreamcatcher 3 Utility Gadget"
 SETTLE_TIME=1
 
 
-SERIAL="$(grep Serial /proc/cpuinfo | sed 's/Serial\s*: 0000\(\w*\)/\1/')"
+ID_SERIAL="$(cat /proc/cpuinfo | grep Serial | awk '{ print $3 }')";
 if [ -z "${SERIAL}" ]; then
         # Minimum serial length is 8 (for MAC conversion)
         SERIAL=00000001
 fi
-MAC="$(echo "${SERIAL}" | rev | sed 's/\(\w\w\)/:\1/g' | cut -b 2- | rev)"
+MAC="$(echo "${ID_SERIAL}" | rev | sed 's/\(\w\w\)/:\1/g' | cut -b 2- | rev)"
 MAC_DEV="02:00:$(echo "${MAC}" | rev | cut -b -11 | rev)"
 MAC_HOST_PRE=$(perl -le 'print hex("'"$(echo "${MAC_DEV}" | rev | cut -d':' -f1 | rev)"'")')
 MAC_HOST="$(echo "${MAC_DEV}" | rev | cut -d':' -f2- | rev):$(printf "%02X" "$((MAC_HOST_PRE + 1))")"
 
+
+function chkerr() {
+	if [ ${1} -ne 0 ]; then
+		exit ${1};
+	fi
+}
 
 function escapestr() {
 	echo "${1}" | sed 's/ /\ /g'
@@ -62,20 +68,25 @@ function loadUSBMod() {
 	shift
 	OPTIONS=(${@})
 	if [ ! -z "${USE_CUSTOM_ID}" ]; then
-#		OPTIONS+=("idVendor=${ID_VENDOR}" "idProduct=${ID_PRODUCT}")
-		OPTIONS+=("iManufacturer=$(escapestr "${ID_MANU}")" "iProduct=$(escapestr "${ID_PROD}")")
-		OPTIONS+=("iSerialNumber=${SERIAL}")
+		if [ ! -z "${ID_VENDOR}" ]; then OPTIONS+=("idVendor=${ID_VENDOR}"); fi
+		if [ ! -z "${ID_PRODUCT}" ]; then OPTIONS+=("idProduct=${ID_PRODUCT}"); fi
+		if [ ! -z "${ID_MANU}" ]; then OPTIONS+=("iManufacturer=$(escapestr "${ID_MANU}")"); fi
+		if [ ! -z "${ID_PROD}" ]; then OPTIONS+=( "iProduct=$(escapestr "${ID_PROD}")"); fi
+		if [ ! -z "${ID_SERIAL}" ]; then OPTIONS+=("iSerialNumber=${ID_SERIAL}"); fi
 	fi
 	if [ "${MOD}" == "g_ether" ] || [ "${MOD}" == "g_ncm" ]; then
-		OPTIONS+=("dev_addr=${MAC_DEV}" "host_addr=${MAC_HOST}")
+		if [ ! -z "${MAC_DEV}" ]; then OPTIONS+=("dev_addr=${MAC_DEV}"); fi
+		if [ ! -z "${MAC_HOST}" ]; then OPTIONS+=("dev_host=${MAC_HOST}"); fi
 	fi
  	sudo modprobe "${MOD}" "${OPTIONS[@]}"
+	chkerr $?
 	if [ "${MOD}" == "g_ether" ] || [ "${MOD}" == "g_ncm" ]; then
 		local INTERFACE;
 		INTERFACE="$(dmesg | tail -n 20 | grep HOST | grep -i "${ETH_HOST_ADDR}" | cut -d':' -f1 | rev | cut -d' ' -f1 | tail -n1 | rev)"
 		while (true); do
 			if [ "${INTERFACE}" != "" ]; then
 				sudo ip link set "${INTERFACE}" up
+				chkerr $?
 				if [ "${1}" == "static" ]; then
 					local IP;
 					IP="192.168.2.1/24"
@@ -83,10 +94,12 @@ function loadUSBMod() {
 						IP="${2}"
 					fi
 					sudo ip addr add "${IP}" dev "${INTERFACE}"
+					chkerr $?
 					sleep 2
 					sudo /usr/sbin/dhcpd -4 -q -cf /etc/dhcp/dhcpd.conf "${INTERFACE}" > "/tmp/dhcpd-${INTERFACE}.log" 2>&1 &
 				else
 					sudo dhclient -v "${INTERFACE}"
+					chkerr $?
 				fi
 				break;
 			else

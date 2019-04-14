@@ -11,6 +11,10 @@ function chkerr() {
 }
 
 function do_partition() {
+	sudo wipefs -a "${SD2}"
+	chkerr $?
+	sudo blkdiscard /dev/mmcblk1
+	chkerr $?
 	echo "start=2048, type=${1}" | sudo sfdisk -w always -W always -X dos -Y dos "${SD2}"
 	chkerr $?
 	sudo sync && sudo kpartx "${SD2}"

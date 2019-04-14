@@ -2,13 +2,15 @@
 PWD=$(realpath "$(dirname "${0}")")
 source "${PWD}/_common"
 USBFILE="${1}"
-shift
 if [ ! -e "${USBFILE}" ]; then
-	USBPATH="$(realpath "${PWD}/${USBIMG_REL_PATH}")"
-	USBFILE="$(realpath "${USBPATH}/${USBFILE}")"
+	USBFILE="$(realpath "${USBUI_ROOT}/${USBIMG_REL_PATH}/${1}")"
 fi
-if [ -e "${USBFILE}" ]; then
+if [ -b "${USBFILE}" ] || [ -f "${USBFILE}" ]; then
+	shift
 	removeAll
 	waitForSettle
 	loadUSBMod mass_storage "file=${USBFILE}" "removable=1" "${@}"
+else
+	echo "${USBFILE} is not a file or block device" 1>&2
+	exit 1
 fi
