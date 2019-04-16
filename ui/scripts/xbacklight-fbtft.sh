@@ -1,5 +1,5 @@
-#!/bin/sh
-PWD=$(realpath "$(dirname "${0}")")
+#!/bin/bash
+PWD="$(realpath "$(dirname "${0}")/../../ctrl/")"
 source "${PWD}/_common"
 
 # Make sure there's backlight control

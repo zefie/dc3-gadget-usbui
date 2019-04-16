@@ -121,6 +121,7 @@ function sd2flash(imgfile) {
     enableButtons(false);
     if (imgfile == '/dev/mmcblk1.img') {
         nwalert("You can't flash the SD card to itself ;)",'Error');
+	enableButtons(true);
         return false;
     }
     nwalert('Are you sure you want to overwrite the contents of the SD Card in Slot 2 with '+imgfile+'?','Confirm Overwrite','Yes', function() {
