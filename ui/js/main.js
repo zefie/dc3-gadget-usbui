@@ -17,6 +17,7 @@ var usbui = path.normalize(usbroot+'/ui');
 var external_sd = '/dev/mmcblk1';
 var cmtmp = '/tmp/currentmode.zef'; // use tmp because its in ram
 var staticip = '192.168.57.3/27';
+var lastimage = '';
 var currentmenu = null;
 var currentmode = 'Disabled';
 var app = null;
@@ -217,6 +218,7 @@ function usbcmd(cmd, args = []) {
                     return false;
                 }
             }
+	    lastimage = args[0];
             currentmode = 'Mass Storage '+args[0];
             if (args.length > 1) {
                 if (args[1] === 'ro=1') currentmode += ' (R/O)';
@@ -309,7 +311,7 @@ function menu(m) {
                                 var sd2 = false;
                                 var s = $('<select/>', {id : 'fileselect', class: 'zefmenu'});
                                 for (var i in results) {
-                                    if (currentmode.indexOf(results[i]) >= 0) {
+                                   if (currentmode.indexOf(results[i]) >= 0 || results[i].indexOf(lastimage.substring(1,lastimage.length - 4)) > 0) {
                                         if (currentmode.indexOf('mmcblk1') > 0) sd2 = true;
                                         s.append($('<option/>',{selected: 'selected'}).html(results[i]));
                                     } else {
