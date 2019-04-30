@@ -319,6 +319,7 @@ function menu(m) {
                                     }
                                 }
                                 $(mdiv).append(s);
+				mdiv.innerHTML += '<br>';
                                 if (m === 'mass_storage_rw') {
                                     mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"usbcmd('mass-storage',[document.getElementById('fileselect').value+'."+ext+"'])\" style=\"display: inline\">"+fa('lock-open')+"</button> ";
                                     mdiv.innerHTML += "<button class=\"zefmenu\" onclick=\"usbcmd('mass-storage',[document.getElementById('fileselect').value+'."+ext+"','ro=1'])\">"+fa('lock')+"</button> ";
@@ -346,7 +347,7 @@ function menu(m) {
 
             case 'mass_storage':
                 setLastMenu(null);
-                mdiv.innerHTML += genButton('Disk Images','menu','mass_storage_rw');
+                mdiv.innerHTML += genButton('Disk Images','menu','mass_storage_rw')+'<br>';
                 mdiv.innerHTML += genButton('ISO Images','menu','mass_storage_iso');
                 break;
 
@@ -397,11 +398,11 @@ function menu(m) {
 
             default:
                 setLastMenu(null);
-                mdiv.innerHTML += genButton('USB Ethernet','menu','ethernet');
-                mdiv.innerHTML += genButton('Disk Images','menu','mass_storage');
+                mdiv.innerHTML += genButton('USB Ethernet','menu','ethernet')+'<br>';
+                mdiv.innerHTML += genButton('Disk Images','menu','mass_storage')+'<br>';
                 mdiv.innerHTML += genButton('Services','menu','services');
                 if (currentmode.length > 0 && currentmode != 'Disabled') {
-                    mdiv.innerHTML += genButton('Disable USB','usbcmd','none');
+                    mdiv.innerHTML += '<br>'+genButton('Disable USB','usbcmd','none');
                 }
                 break;
         }
